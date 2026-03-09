@@ -1,0 +1,81 @@
+<?php
+
+namespace App\Filament\Resources\Posts\Schemas;
+
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\ColorPicker;
+use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\TagsInput;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Group;
+use App\Models\Category;
+
+class PostForm
+{
+    public static function configure(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                // Bagian Kiri (2/3 Lebar)
+                Group::make([
+                    Section::make('Konten Utama')
+                        ->description('Kelola isi dan informasi dasar postingan Anda.')
+                        ->icon('heroicon-o-pencil-square') // Ikon berbeda
+                        ->schema([
+                            Group::make([
+                                TextInput::make('title')
+                                    ->required()
+                                    ->minLength(5),
+                                TextInput::make('slug')
+                                    ->required()
+                                    ->unique(ignoreRecord: true), // Memastikan slug unik
+                            ])->columns(2), // Membuat tampilan 2 kolom untuk field utama
+
+                            Select::make('category_id')
+                                ->label('Kategori')
+                                ->options(Category::all()->pluck('name', 'id'))
+                                ->required()
+                                ->searchable()
+                                ->preload(),
+
+                            RichEditor::make('body') // Menggunakan 'body' agar sesuai dengan database
+                                ->required()
+                                ->columnSpanFull(),
+                        ]),
+                ])->columnSpan(2),
+
+                // Bagian Kanan (1/3 Lebar)
+                Group::make([
+                    Section::make('Media')
+                        ->description('Unggah gambar unggulan.')
+                        ->icon('heroicon-o-photo') // Ikon berbeda
+                        ->schema([
+                            FileUpload::make('image')
+                                ->disk('public')
+                                ->directory('posts')
+                                ->image(), // Validasi hanya gambar
+                        ]),
+
+                    Section::make('Pengaturan & Meta')
+                        ->description('Atur visibilitas dan label.')
+                        ->icon('heroicon-o-cog-6-tooth') // Ikon berbeda
+                        ->schema([
+                            ColorPicker::make('color')
+                                ->label('Warna Tema'),
+                            TagsInput::make('tags')
+                                ->placeholder('Tambah tag...'),
+                            Checkbox::make('published')
+                                ->label('Terbitkan Postingan'),
+                            DateTimePicker::make('published_at')
+                                ->label('Waktu Publikasi'),
+                        ]),
+                ])->columnSpan(1),
+            ])
+            ->columns(3); // Menetapkan total grid menjadi 3 kolom
+    }
+}
